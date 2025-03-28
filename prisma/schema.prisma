@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" 
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FARMER
+  BUYER
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String?
+  username String  @unique
+  password String
+  location String?
+  role     Role    
+  farmer   Farmer?
+  buyer    Buyer?
+}
+
+model Farmer {
+  id       Int     @id @default(autoincrement())
+  userId   Int     @unique
+  user     User    @relation(fields: [userId], references: [id])
+  crops    Crop[]
+}
+
+model Buyer {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @unique
+  user      User      @relation(fields: [userId], references: [id])
+  latitude  Float
+  longitude Float
+  community String
+  contracts Contract[]
+}
+
+model Crop {
+  id          Int        @id @default(autoincrement())
+  name        String
+  farmerId    Int
+  farmer      Farmer     @relation(fields: [farmerId], references: [id])
+  description String?
+  marketPrice Decimal
+  contracts   Contract[]
+}
+
+model Contract {
+  id      Int     @id @default(autoincrement())
+  buyerId Int
+  cropId  Int
+  status  String  @default("pending")
+
+  buyer   Buyer  @relation(fields: [buyerId], references: [id])
+  crop    Crop   @relation(fields: [cropId], references: [id])
+}
