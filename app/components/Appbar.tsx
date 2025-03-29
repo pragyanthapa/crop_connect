@@ -1,5 +1,4 @@
 "use client";
-
 import { signIn, signOut, useSession } from "next-auth/react";
 import { FaUserCircle } from "react-icons/fa";
 import Link from "next/link";
@@ -11,136 +10,107 @@ export default function Appbar() {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-     
-      <header className="bg-gray-950 shadow-lg py-5 px-6 sticky top-0 z-50">
+      {/* Header */}
+      <header className="bg-gray-950 bg-opacity-80 backdrop-blur-md shadow-xl py-5 px-6 sticky top-0 z-50 border-b border-gray-800">
         <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" className="text-3xl font-extrabold text-green-400 tracking-wide">
+          <Link href="/" className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 drop-shadow-xl">
             CropConnect
           </Link>
-          <nav className="hidden md:flex space-x-6 text-gray-300 font-medium">
-            <Link href="/" className="hover:text-green-400 transition">Home</Link>
-            <Link href="/market" className="hover:text-green-400 transition">Market</Link>
-            <Link href="/contracts" className="hover:text-green-400 transition">Contracts</Link>
-            <Link href="/advisory" className="hover:text-green-400 transition">AI Advisory</Link>
+          <nav className="hidden md:flex space-x-8 text-gray-300 font-medium">
+            {["Home", "Market", "Contracts", "Advisory"].map((item) => (
+              <motion.div
+                key={item}
+                whileHover={{ scale: 1.1, y: -3 }}
+                transition={{ type: "spring", stiffness: 200 }}
+              >
+                <Link href={`/${item.toLowerCase()}`} className="hover:text-green-400 transition-all duration-300">
+                  {item}
+                </Link>
+              </motion.div>
+            ))}
           </nav>
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="relative group">
+              <motion.div className="relative group" whileHover={{ scale: 1.05 }}>
                 <button className="flex items-center space-x-2 text-gray-300">
                   <FaUserCircle className="text-2xl" />
                   <span className="hidden md:inline">{user.name || "Profile"}</span>
                 </button>
-                <div className="absolute right-0 mt-2 bg-gray-800 shadow-lg rounded-md p-3 hidden group-hover:block">
-                  <Link href="/profile" className="block px-4 py-2 hover:bg-gray-700">Profile</Link>
-                  <Link href="/settings" className="block px-4 py-2 hover:bg-gray-700">Settings</Link>
-                  <button onClick={() => signOut()} className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700">
+                <div className="absolute right-0 mt-2 bg-gray-800 shadow-2xl rounded-lg p-3 hidden group-hover:block transition-all duration-300">
+                  <Link href="/profile" className="block px-4 py-2 hover:bg-gray-700 rounded-lg">Profile</Link>
+                  <Link href="/settings" className="block px-4 py-2 hover:bg-gray-700 rounded-lg">Settings</Link>
+                  <button onClick={() => signOut()} className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 rounded-lg">
                     Sign Out
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
-              <button 
-                onClick={() => signIn()} 
-                className="px-5 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition">
+              <motion.button
+                whileHover={{ scale: 1.15, boxShadow: "0px 4px 15px rgba(34, 255, 34, 0.5)" }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => signIn()}
+                className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full hover:from-green-600 hover:to-green-700 shadow-xl transition"
+              >
                 Sign In
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
       </header>
 
-     
-      <section className="bg-gradient-to-r from-gray-800 to-gray-900 py-24 text-center">
-        <div className="container mx-auto">
-          <h1 className="text-5xl font-extrabold text-green-400 leading-tight">
+      {/* Hero Section */}
+      <section className="relative flex items-center justify-center min-h-screen px-6 text-center">
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="container mx-auto">
+          <h1 className="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 drop-shadow-xl">
             The Future of <span className="text-white">Agriculture</span> is Here
           </h1>
-          <p className="text-lg text-gray-400 mt-4 max-w-2xl mx-auto">
-            A seamless digital platform empowering farmers with fair contract farming and AI-powered crop insights**.
+          <p className="text-lg text-gray-300 mt-4 max-w-3xl mx-auto">
+            A seamless digital platform empowering farmers with fair contract farming and AI-powered crop insights.
           </p>
-          <div className="mt-8">
-            <Link href="/market">
-              <motion.button 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }}
-                className="px-8 py-3 bg-green-600 text-white text-lg font-semibold rounded-full shadow-md hover:bg-green-700 transition"
-              >
-                Explore Marketplace
-              </motion.button>
-            </Link>
-          </div>
-        </div>
+          <motion.button
+  whileHover={{ scale: 1.1, boxShadow: "0px 4px 15px rgba(34, 255, 34, 0.5)" }}
+  whileTap={{ scale: 0.95 }}
+  className="mt-8 px-10 py-3 bg-green-600 text-white text-lg font-semibold rounded-full shadow-lg hover:bg-green-700 transition"
+>
+  <Link href="/market">Explore Marketplace</Link>
+</motion.button>
+        </motion.div>
       </section>
 
-     
-      <section className="container mx-auto py-20">
-        <h2 className="text-4xl font-bold text-center text-green-400">Why Choose CropConnect?</h2>
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+      {/* Features */}
+      <section className="container mx-auto py-20 text-center">
+        <h2 className="text-4xl font-bold text-green-400">Why Choose CropConnect?</h2>
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { title: "🌱 Direct Farmer-to-Buyer Trade", desc: "No middlemen, ensuring **fair pricing** and **maximum profits**." },
-            { title: "📊 AI-Powered Insights", desc: "Smart recommendations based on **weather, soil, and demand trends**." },
-            { title: "🔒 Secure Contracts", desc: "Pre-agreed contracts offer **income security** for farmers." }
+            { title: "🌱 Direct Trade", desc: "No middlemen, fair pricing." },
+            { title: "📊 AI Insights", desc: "Smart recommendations." },
+            { title: "🔒 Secure Contracts", desc: "Guaranteed payments." }
           ].map((feature, index) => (
-            <motion.div 
+            <motion.div
               key={index}
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-gray-800 shadow-md rounded-xl border-t-4 border-green-500"
+              whileHover={{ scale: 1.05, boxShadow: "0px 10px 20px rgba(34, 255, 34, 0.2)" }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="p-6 bg-gray-800 shadow-xl rounded-3xl border-t-4 border-green-500 transform hover:shadow-green-500/25 transition-all duration-300"
             >
-              <h3 className="text-xl font-semibold text-green-400">{feature.title}</h3>
+              <h3 className="text-2xl font-semibold text-green-400">{feature.title}</h3>
               <p className="text-gray-300 mt-2">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      
-      <section className="bg-gray-800 py-20">
-        <div className="container mx-auto">
-          <h2 className="text-4xl font-bold text-center text-green-400">What Farmers Say</h2>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-center">
-            {[
-              { name: "Raj Patel", feedback: "CropConnect helped me find the best buyers without any hassle!" },
-              { name: "Ananya Verma", feedback: "The AI advisory boosted my crop yield by 20%! Incredible support." },
-              { name: "Mohan Das", feedback: "Pre-agreed contracts ensure I get paid fairly, no middlemen involved." }
-            ].map((testimonial, index) => (
-              <motion.div 
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                className="p-6 bg-gray-700 shadow-md rounded-xl"
-              >
-                <p className="text-gray-300 italic">"{testimonial.feedback}"</p>
-                <h3 className="text-lg font-semibold text-green-400 mt-3">— {testimonial.name}</h3>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-     
-      <section className="container mx-auto py-20 text-center">
-        <h2 className="text-4xl font-bold text-green-400">Join CropConnect Today</h2>
-        <p className="text-lg text-gray-300 mt-4 max-w-2xl mx-auto">
-          Start selling your crops directly to buyers, get AI-driven insights, and secure **fair contracts** today.
-        </p>
-        <div className="mt-8">
-          <motion.button 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 bg-green-500 text-white text-lg font-semibold rounded-full shadow-md hover:bg-green-600 transition"
-          >
-            Get Started
-          </motion.button>
-        </div>
-      </section>
-
-     
+      {/* Footer */}
       <footer className="bg-gray-950 text-gray-400 py-8 mt-16">
         <div className="container mx-auto text-center">
           <p className="text-sm">&copy; 2025 CropConnect. All Rights Reserved.</p>
           <div className="mt-4 space-x-6">
-            <Link href="/" className="hover:text-green-400 transition">Home</Link>
-            <Link href="/market" className="hover:text-green-400 transition">Market</Link>
-            <Link href="/contact" className="hover:text-green-400 transition">Contact Us</Link>
+            {["Home", "Market", "Contact Us"].map((item) => (
+              <motion.div key={item} whileHover={{ scale: 1.1, y: -3 }} transition={{ type: "spring", stiffness: 200 }}>
+                <Link href={`/${item.toLowerCase()}`} className="hover:text-green-400 transition-all">
+                  {item}
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       </footer>

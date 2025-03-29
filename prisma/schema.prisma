@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" 
+  provider = "postgresql" // Change if using MySQL or another database
   url      = env("DATABASE_URL")
 }
 
@@ -19,49 +19,65 @@ enum Role {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
+  id       String  @id @default(uuid())
   name     String?
   username String  @unique
   password String
-  location String?
-  role     Role    
-  farmer   Farmer?
-  buyer    Buyer?
+  role     Role
+  location String
+
+  farmer   Farmer? @relation("UserFarmer")
+  buyer    Buyer?  @relation("UserBuyer")
 }
 
 model Farmer {
-  id       Int     @id @default(autoincrement())
-  userId   Int     @unique
-  user     User    @relation(fields: [userId], references: [id])
-  crops    Crop[]
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  user      User    @relation("UserFarmer", fields: [userId], references: [id], onDelete: Cascade)
+
+  experience Int
+  farmSize   Float
+  cropTypes  String[]
+  crops      Crop[]
+  createdAt  DateTime @default(now())
 }
 
 model Buyer {
-  id        Int       @id @default(autoincrement())
-  userId    Int       @unique
-  user      User      @relation(fields: [userId], references: [id])
-  latitude  Float
-  longitude Float
-  community String
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  user      User    @relation("UserBuyer", fields: [userId], references: [id], onDelete: Cascade)
+
+  community String?
   contracts Contract[]
+  createdAt DateTime @default(now())
 }
 
 model Crop {
-  id          Int        @id @default(autoincrement())
+  id          String  @id @default(uuid())
   name        String
-  farmerId    Int
-  farmer      Farmer     @relation(fields: [farmerId], references: [id])
-  description String?
-  marketPrice Decimal
-  contracts   Contract[]
+  quantity    Int
+  price       Float
+  imageUrl    String?
+  description String
+  farmerId    String
+  location    Json
+  farmer      Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  contracts Contract[]
+  createdAt DateTime @default(now())
 }
 
 model Contract {
-  id      Int     @id @default(autoincrement())
-  buyerId Int
-  cropId  Int
-  status  String  @default("pending")
-
-  buyer   Buyer  @relation(fields: [buyerId], references: [id])
-  crop    Crop   @relation(fields: [cropId], references: [id])
+  id        String  @id @default(uuid())
+  
+  buyerId   String
+  cropId    String
+  
+  buyer     Buyer   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  crop      Crop    @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  
+  status    String  @default("Pending") // Possible values: Pending, Approved, Completed
+  deliveryDate DateTime
+  notes     String?
+  createdAt DateTime @default(now())
 }

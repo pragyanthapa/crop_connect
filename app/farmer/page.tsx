@@ -20,18 +20,34 @@ export default function FarmerDashboard() {
 
  
   const onSubmit = async (data: any) => {
-    const response = await fetch("/api/farmer/crops", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, imageUrl: image }),
-    });
+    try {
+      const response = await fetch("/api/farmer/crops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          description: data.description,
+          price: Number(data.price),
+          quantity: Number(data.quantity),
+          imageUrl: image,
+          location: {
+            address: data.location,
+            coordinates: null
+          }
+        }),
+      });
 
-    if (response.ok) {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add crop");
+      }
+
       reset();
       setImage(null);
       alert("Crop added successfully!");
-    } else {
-      alert("Error adding crop");
+    } catch (error) {
+      console.error("Error adding crop:", error);
+      alert(error instanceof Error ? error.message : "Error adding crop");
     }
   };
 
@@ -58,7 +74,10 @@ export default function FarmerDashboard() {
         <input type="number" {...register("price", { required: true })} className="w-full px-4 py-2 border rounded-md mt-2" />
 
         <label className="block mt-4 text-gray-700 font-semibold">Description</label>
-        <textarea {...register("description")} className="w-full px-4 py-2 border rounded-md mt-2"></textarea>
+        <textarea {...register("description", { required: true })} className="w-full px-4 py-2 border rounded-md mt-2"></textarea>
+
+        <label className="block mt-4 text-gray-700 font-semibold">Location</label>
+        <input type="text" {...register("location", { required: true })} className="w-full px-4 py-2 border rounded-md mt-2" placeholder="Enter your farm location" />
 
         <label className="block mt-4 text-gray-700 font-semibold">Upload Field Picture</label>
         <input type="file" accept="image/*" onChange={handleImageUpload} className="mt-2" />
