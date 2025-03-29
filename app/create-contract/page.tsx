@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
+import { FaMapMarkerAlt } from "react-icons/fa";
 
 interface Crop {
   id: string;
@@ -36,6 +37,8 @@ export default function CreateContract() {
     deliveryDate: "",
     notes: "",
   });
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -70,10 +73,35 @@ export default function CreateContract() {
     }
   }, [status, router, cropId]);
 
+  const getLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocationError("Failed to get your location");
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by your browser");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!location) {
+      setError("Please get your location first");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/contracts", {
@@ -81,7 +109,10 @@ export default function CreateContract() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          buyerLocation: location,
+        }),
       });
 
       if (!response.ok) {
@@ -192,6 +223,32 @@ export default function CreateContract() {
                 min={new Date().toISOString().split('T')[0]}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Your Location
+              </label>
+              <div className="mt-1 flex space-x-2">
+                <input
+                  type="text"
+                  value={location ? `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}` : ""}
+                  readOnly
+                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-gray-50"
+                  placeholder="Click to get your location"
+                />
+                <button
+                  type="button"
+                  onClick={getLocation}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center space-x-2"
+                >
+                  <FaMapMarkerAlt />
+                  <span>Get Location</span>
+                </button>
+              </div>
+              {locationError && (
+                <p className="mt-1 text-sm text-red-600">{locationError}</p>
+              )}
             </div>
 
             <div>

@@ -3,6 +3,81 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "../auth/[...nextauth]/auth";
 
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+      include: {
+        buyer: true,
+        farmer: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Get contracts where user is either buyer or farmer
+    const contracts = await prisma.contract.findMany({
+      where: {
+        OR: [
+          {
+            buyerId: user.buyer?.id,
+          },
+          {
+            crop: {
+              farmerId: user.farmer?.id,
+            },
+          },
+        ],
+      },
+      include: {
+        buyer: {
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        crop: {
+          select: {
+            name: true,
+            quantity: true,
+            price: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(contracts);
+  } catch (error) {
+    console.error("Error fetching contracts:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch contracts" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);

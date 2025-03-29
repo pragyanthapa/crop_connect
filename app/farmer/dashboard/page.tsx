@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaTrash, FaMapMarkerAlt } from "react-icons/fa";
 import Link from "next/link";
 
 interface Crop {
@@ -67,6 +67,8 @@ export default function FarmerDashboard() {
     imageUrl: "",
     location: "",
   });
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     try {
@@ -135,10 +137,48 @@ export default function FarmerDashboard() {
     }
   }, [status, session, router]);
 
+  const getLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          // Get address from coordinates using reverse geocoding
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+            .then(response => response.json())
+            .then(data => {
+              setFormData(prev => ({
+                ...prev,
+                location: data.display_name
+              }));
+            })
+            .catch(error => {
+              console.error("Error getting address:", error);
+              setLocationError("Failed to get address from location");
+            });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocationError("Failed to get your location");
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by your browser");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (!location) {
+      setError("Please get your location first");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/farmer/crops", {
@@ -154,7 +194,7 @@ export default function FarmerDashboard() {
           imageUrl: formData.imageUrl || null,
           location: {
             address: formData.location,
-            coordinates: null
+            coordinates: location
           },
         }),
       });
@@ -211,7 +251,7 @@ export default function FarmerDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "accepted" }),
+        body: JSON.stringify({ status: "ACCEPTED" }),
       });
 
       if (!response.ok) {
@@ -219,7 +259,8 @@ export default function FarmerDashboard() {
         throw new Error(data.error || "Failed to accept contract");
       }
 
-      await Promise.all([fetchContracts(), fetchCrops()]);
+      // Redirect to success page
+      router.push(`/contracts/${contractId}/success`);
     } catch (error) {
       console.error("Error accepting contract:", error);
       setError(error instanceof Error ? error.message : "Failed to accept contract");
@@ -346,13 +387,27 @@ export default function FarmerDashboard() {
                   </div>
                   <div>
                     <label className="block text-gray-300 mb-2">Location</label>
-                    <input
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-700/30 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      required
-                    />
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        className="flex-1 px-4 py-2 bg-gray-700/30 border border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        required
+                        readOnly
+                      />
+                      <button
+                        type="button"
+                        onClick={getLocation}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300 flex items-center space-x-2"
+                      >
+                        <FaMapMarkerAlt />
+                        <span>Get Location</span>
+                      </button>
+                    </div>
+                    {locationError && (
+                      <p className="mt-1 text-sm text-red-400">{locationError}</p>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-gray-300 mb-2">Description</label>
@@ -452,13 +507,22 @@ export default function FarmerDashboard() {
                     <p className="text-gray-400">Notes: {contract.notes}</p>
                   )}
                 </div>
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => handleAcceptContract(contract.id)}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300"
-                  >
-                    Accept Contract
-                  </button>
+                <div className="flex justify-end space-x-4">
+                  {contract.status === "Pending" ? (
+                    <button
+                      onClick={() => handleAcceptContract(contract.id)}
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300"
+                    >
+                      Accept Contract
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/contracts/${contract.id}/tracking`}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                    >
+                      Track Delivery
+                    </Link>
+                  )}
                 </div>
               </motion.div>
             ))}
